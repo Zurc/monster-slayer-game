@@ -208,6 +208,71 @@
             transform: translateY(-2px);
         }
         
+        #start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 20;
+            gap: 20px;
+        }
+        
+        #start-screen h2 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00f260, 0 0 20px #00f260;
+        }
+        
+        #username-input {
+            padding: 10px;
+            font-size: 1.2rem;
+            background-color: #333;
+            color: #00f260;
+            border: 2px solid #00f260;
+            box-shadow: 0 0 5px #00f260;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            width: 80%;
+            max-width: 400px;
+        }
+        
+        .difficulty-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .difficulty-button {
+            padding: 15px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00f260;
+            background-color: #1a1a2e;
+            transition: box-shadow 0.2s, transform 0.2s;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        .difficulty-button:hover {
+            box-shadow: 0 0 15px #00f260, 0 0 25px #00f260, 0 0 30px #00f260;
+            transform: translateY(-2px);
+        }
+        
+        .difficulty-button.easy { border-color: #00ff7f; box-shadow: 0 0 10px #00ff7f;}
+        .difficulty-button.normal { border-color: #ffc629; box-shadow: 0 0 10px #ffc629;}
+        .difficulty-button.hard { border-color: #ff416c; box-shadow: 0 0 10px #ff416c;}
+        
         @media (max-width: 600px) {
             .game-container {
                 padding: 20px;
@@ -221,6 +286,9 @@
             #game-over-message {
                 font-size: 2rem;
             }
+            #start-screen h2 {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
@@ -231,7 +299,7 @@
 
     <div class="participants">
         <div class="participant">
-            <div class="participant-name">Player</div>
+            <div id="player-name" class="participant-name"></div>
             <div class="health-bar-container">
                 <div id="player-health-bar" class="health-bar" style="width: 100%;">100 HP</div>
             </div>
@@ -260,17 +328,42 @@
     </div>
 </div>
 
+<div id="start-screen">
+    <h2>Enter Username</h2>
+    <input type="text" id="username-input" placeholder="Your Name">
+    <h2>Choose Difficulty</h2>
+    <div class="difficulty-buttons">
+        <button id="easy-difficulty" class="difficulty-button easy">Easy</button>
+        <button id="normal-difficulty" class="difficulty-button normal">Normal</button>
+        <button id="hard-difficulty" class="difficulty-button hard">Hard</button>
+    </div>
+</div>
+
 <script>
-    // Constants for game settings
+    // Constants for game settings and difficulty levels
     const MAX_HEALTH = 100;
-    const REGULAR_ATTACK_MIN = 8;
-    const REGULAR_ATTACK_MAX = 15;
-    const STRONG_ATTACK_MIN = 18;
-    const STRONG_ATTACK_MAX = 25;
-    const HEAL_MIN = 10;
-    const HEAL_MAX = 20;
-    const MONSTER_ATTACK_MIN = 10;
-    const MONSTER_ATTACK_MAX = 17;
+    const DIFFICULTY_SETTINGS = {
+        easy: {
+            playerAttackMin: 12, playerAttackMax: 20,
+            playerStrongAttackMin: 25, playerStrongAttackMax: 35,
+            playerHealMin: 15, playerHealMax: 25,
+            monsterAttackMin: 5, monsterAttackMax: 10,
+        },
+        normal: {
+            playerAttackMin: 8, playerAttackMax: 15,
+            playerStrongAttackMin: 18, playerStrongAttackMax: 25,
+            playerHealMin: 10, playerHealMax: 20,
+            monsterAttackMin: 10, monsterAttackMax: 17,
+        },
+        hard: {
+            playerAttackMin: 5, playerAttackMax: 10,
+            playerStrongAttackMin: 15, playerStrongAttackMax: 20,
+            playerHealMin: 5, playerHealMax: 15,
+            monsterAttackMin: 15, monsterAttackMax: 25,
+        }
+    };
+    
+    // Cooldown constants
     const STRONG_ATTACK_COOLDOWN = 3;
     const HEAL_COOLDOWN = 5;
 
@@ -278,10 +371,13 @@
     let playerHealth = MAX_HEALTH;
     let monsterHealth = MAX_HEALTH;
     let turnCount = 0;
-    let strongAttackTurns = 0;
-    let healTurns = 0;
+    let strongAttackCooldown = 0;
+    let healCooldown = 0;
+    let difficulty = 'normal';
+    let username = '';
 
     // DOM elements
+    const playerName = document.getElementById('player-name');
     const playerHealthBar = document.getElementById('player-health-bar');
     const monsterHealthBar = document.getElementById('monster-health-bar');
     const regularAttackBtn = document.getElementById('regular-attack-button');
@@ -291,6 +387,11 @@
     const gameOverScreen = document.getElementById('game-over-screen');
     const gameOverMessage = document.getElementById('game-over-message');
     const newGameBtn = document.getElementById('new-game-button');
+    const startScreen = document.getElementById('start-screen');
+    const usernameInput = document.getElementById('username-input');
+    const easyBtn = document.getElementById('easy-difficulty');
+    const normalBtn = document.getElementById('normal-difficulty');
+    const hardBtn = document.getElementById('hard-difficulty');
 
     // --- Helper Functions ---
     
@@ -334,11 +435,11 @@
     // Function to check for game over condition
     function checkForGameOver() {
         if (playerHealth <= 0) {
-            endGame("You were defeated! The monster wins!");
+            endGame(`${username} was defeated! The monster wins!`);
             return true;
         }
         if (monsterHealth <= 0) {
-            endGame("You have slain the monster! You win!");
+            endGame(`${username} has slain the monster! You win!`);
             return true;
         }
         return false;
@@ -355,30 +456,53 @@
         addLogMessage(message, 'game-over');
     }
 
-    // Function to reset the game to its initial state
-    function resetGame() {
+    // Function to reset the game to its initial state (before start screen)
+    function showStartScreen() {
+        startScreen.style.display = 'flex';
+        gameOverScreen.style.display = 'none';
+        logContainer.innerHTML = '';
+    }
+
+    // Function to start the game after selecting difficulty
+    function startGame() {
+        username = usernameInput.value || 'Player';
+        if (username.trim() === '') {
+            username = 'Player';
+        }
+        playerName.textContent = username;
+
+        // Reset game state for a new round
         playerHealth = MAX_HEALTH;
         monsterHealth = MAX_HEALTH;
         turnCount = 0;
-        strongAttackTurns = 0;
-        healTurns = 0;
+        strongAttackCooldown = 0; // Starts available
+        healCooldown = 0; // Starts available
         
+        startScreen.style.display = 'none';
         gameOverScreen.style.display = 'none';
         logContainer.innerHTML = ''; // Clear the log
         updateHealthBars();
-        enableButtons();
-        addLogMessage("A new game has started!", 'system-message');
+        updateButtonState();
+        addLogMessage(`A new game has started on ${difficulty.toUpperCase()} difficulty! Good luck, ${username}!`, 'system-message');
     }
     
-    // Function to enable all player action buttons
-    function enableButtons() {
-        regularAttackBtn.disabled = false;
-        strongAttackBtn.disabled = false;
-        healBtn.disabled = false;
-        
-        // Update cooldowns visually
-        strongAttackBtn.textContent = `Strong Attack (${STRONG_ATTACK_COOLDOWN - strongAttackTurns})`;
-        healBtn.textContent = `Heal (${HEAL_COOLDOWN - healTurns})`;
+    // Function to update the disabled state of buttons based on cooldown
+    function updateButtonState() {
+        if (strongAttackCooldown > 0) {
+            strongAttackBtn.disabled = true;
+            strongAttackBtn.textContent = `Strong Attack (${strongAttackCooldown})`;
+        } else {
+            strongAttackBtn.disabled = false;
+            strongAttackBtn.textContent = "Strong Attack";
+        }
+
+        if (healCooldown > 0) {
+            healBtn.disabled = true;
+            healBtn.textContent = `Heal (${healCooldown})`;
+        } else {
+            healBtn.disabled = false;
+            healBtn.textContent = "Heal";
+        }
     }
 
     // --- Game Logic Functions ---
@@ -387,26 +511,32 @@
     function playerTurn(action) {
         if (checkForGameOver()) return;
         
+        const settings = DIFFICULTY_SETTINGS[difficulty];
+        
         let damage = 0;
         let heal = 0;
         
         turnCount++;
-        strongAttackTurns = (strongAttackTurns + 1) % STRONG_ATTACK_COOLDOWN;
-        healTurns = (healTurns + 1) % HEAL_COOLDOWN;
-
+        
         if (action === 'regular') {
-            damage = getRandomInt(REGULAR_ATTACK_MIN, REGULAR_ATTACK_MAX);
+            damage = getRandomInt(settings.playerAttackMin, settings.playerAttackMax);
             monsterHealth -= damage;
-            addLogMessage(`You dealt ${damage} damage with a regular attack!`, 'player-turn');
-        } else if (action === 'strong') {
-            damage = getRandomInt(STRONG_ATTACK_MIN, STRONG_ATTACK_MAX);
+            addLogMessage(`${username} dealt ${damage} damage with a regular attack!`, 'player-turn');
+        } else if (action === 'strong' && strongAttackCooldown === 0) {
+            damage = getRandomInt(settings.playerStrongAttackMin, settings.playerStrongAttackMax);
             monsterHealth -= damage;
-            addLogMessage(`You dealt a massive ${damage} damage with a strong attack!`, 'player-turn');
-        } else if (action === 'heal') {
-            heal = getRandomInt(HEAL_MIN, HEAL_MAX);
+            strongAttackCooldown = STRONG_ATTACK_COOLDOWN; // Set cooldown
+            addLogMessage(`${username} dealt a massive ${damage} damage with a strong attack!`, 'player-turn');
+        } else if (action === 'heal' && healCooldown === 0) {
+            heal = getRandomInt(settings.playerHealMin, settings.playerHealMax);
             playerHealth = Math.min(MAX_HEALTH, playerHealth + heal);
-            addLogMessage(`You healed yourself for ${heal} health!`, 'player-turn');
+            healCooldown = HEAL_COOLDOWN; // Set cooldown
+            addLogMessage(`${username} healed for ${heal} health!`, 'player-turn');
         }
+
+        // Decrement cooldowns
+        if (strongAttackCooldown > 0) strongAttackCooldown--;
+        if (healCooldown > 0) healCooldown--;
 
         updateHealthBars();
         if (checkForGameOver()) return;
@@ -419,7 +549,8 @@
     function monsterTurn() {
         if (checkForGameOver()) return;
         
-        const damage = getRandomInt(MONSTER_ATTACK_MIN, MONSTER_ATTACK_MAX);
+        const settings = DIFFICULTY_SETTINGS[difficulty];
+        const damage = getRandomInt(settings.monsterAttackMin, settings.monsterAttackMax);
         playerHealth -= damage;
         
         addLogMessage(`The monster attacks, dealing ${damage} damage!`, 'monster-turn');
@@ -429,37 +560,20 @@
         updateButtonState(); // Check button state after monster's turn
     }
 
-    // Function to update the disabled state of buttons based on turn count
-    function updateButtonState() {
-        // Strong Attack is available every 3 turns
-        if (strongAttackTurns === 0) {
-            strongAttackBtn.disabled = false;
-            strongAttackBtn.textContent = "Strong Attack";
-        } else {
-            strongAttackBtn.disabled = true;
-            strongAttackBtn.textContent = `Strong Attack (${STRONG_ATTACK_COOLDOWN - strongAttackTurns})`;
-        }
-
-        // Heal is available every 5 turns
-        if (healTurns === 0) {
-            healBtn.disabled = false;
-            healBtn.textContent = "Heal";
-        } else {
-            healBtn.disabled = true;
-            healBtn.textContent = `Heal (${HEAL_COOLDOWN - healTurns})`;
-        }
-    }
-
     // --- Event Listeners ---
     
     regularAttackBtn.addEventListener('click', () => playerTurn('regular'));
     strongAttackBtn.addEventListener('click', () => playerTurn('strong'));
     healBtn.addEventListener('click', () => playerTurn('heal'));
-    newGameBtn.addEventListener('click', resetGame);
+    newGameBtn.addEventListener('click', showStartScreen);
     
-    // Initialize the game when the page loads
+    easyBtn.addEventListener('click', () => { difficulty = 'easy'; startGame(); });
+    normalBtn.addEventListener('click', () => { difficulty = 'normal'; startGame(); });
+    hardBtn.addEventListener('click', () => { difficulty = 'hard'; startGame(); });
+    
+    // Initialize the game by showing the start screen
     window.onload = function() {
-        resetGame();
+        showStartScreen();
     };
 
 </script>
