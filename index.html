@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monster Slayer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Monofett&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Press Start 2P', cursive;
@@ -56,7 +56,7 @@
             width: 45%;
             min-width: 280px;
             color: #ffffff;
-            font-family: 'Monofett', cursive;
+            font-family: 'VT323', monospace;
             font-size: 1.2rem;
             text-shadow: none;
         }
@@ -151,7 +151,7 @@
             text-align: left;
             border: 2px solid #0575e6;
             box-shadow: inset 0 0 10px #0575e6;
-            font-family: 'Monofett', cursive;
+            font-family: 'VT323', monospace;
             color: #fff;
             text-shadow: none;
         }
@@ -166,6 +166,7 @@
         .log-message.monster-turn { color: #ff416c; }
         .log-message.system-message { color: #fff; font-weight: bold; }
         .log-message.game-over { color: #ff0000; font-weight: bold; font-size: 1.4rem;}
+        .log-message.victory { color: #00f260; font-weight: bold; font-size: 1.4rem;}
 
         #game-over-screen {
             display: none;
@@ -201,6 +202,7 @@
             box-shadow: 0 0 10px #00f260;
             transition: box-shadow 0.2s, transform 0.2s;
             font-family: 'Press Start 2P', cursive;
+            margin-top: 20px;
         }
         
         #new-game-button:hover {
@@ -272,6 +274,42 @@
         .difficulty-button.easy { border-color: #00ff7f; box-shadow: 0 0 10px #00ff7f;}
         .difficulty-button.normal { border-color: #ffc629; box-shadow: 0 0 10px #ffc629;}
         .difficulty-button.hard { border-color: #ff416c; box-shadow: 0 0 10px #ff416c;}
+
+        #highscore-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #1a1a2e;
+            border-radius: 5px;
+            border: 2px solid #0575e6;
+            box-shadow: inset 0 0 10px #0575e6;
+            display: none;
+            text-align: left;
+        }
+        
+        #highscore-container h2 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #00f260;
+            text-shadow: 0 0 5px #00f260;
+        }
+        
+        #highscore-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+        }
+        
+        #highscore-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #4a4a68;
+        }
+        
+        #highscore-list li:last-child {
+            border-bottom: none;
+        }
         
         @media (max-width: 600px) {
             .game-container {
@@ -324,6 +362,10 @@
 
     <div id="game-over-screen">
         <div id="game-over-message"></div>
+        <div id="highscore-container">
+            <h2>High Scores</h2>
+            <ul id="highscore-list"></ul>
+        </div>
         <button id="new-game-button">Start New Game</button>
     </div>
 </div>
@@ -392,6 +434,8 @@
     const easyBtn = document.getElementById('easy-difficulty');
     const normalBtn = document.getElementById('normal-difficulty');
     const hardBtn = document.getElementById('hard-difficulty');
+    const highscoreContainer = document.getElementById('highscore-container');
+    const highscoreList = document.getElementById('highscore-list');
 
     // --- Helper Functions ---
     
@@ -431,29 +475,41 @@
             monsterHealthBar.classList.remove('low');
         }
     }
-
+    
     // Function to check for game over condition
     function checkForGameOver() {
         if (playerHealth <= 0) {
-            endGame(`${username} was defeated! The monster wins!`);
+            endGame(`${username} was defeated! The monster wins!`, 'defeat');
             return true;
         }
         if (monsterHealth <= 0) {
-            endGame(`${username} has slain the monster! You win!`);
+            endGame(`${username} has slain the monster in ${turnCount} rounds! You win!`, 'victory');
             return true;
         }
         return false;
     }
 
     // Function to handle the end of the game
-    function endGame(message) {
+    function endGame(message, outcome) {
         gameOverMessage.textContent = message;
+        if (outcome === 'victory') {
+            gameOverMessage.style.color = '#00f260';
+            gameOverMessage.style.textShadow = '0 0 10px #00f260, 0 0 20px #00f260';
+            saveHighscore(username, turnCount);
+            displayHighscores();
+        } else {
+            gameOverMessage.style.color = '#ff0000';
+            gameOverMessage.style.textShadow = '0 0 10px #ff0000, 0 0 20px #ff0000';
+            highscoreContainer.style.display = 'none';
+        }
+        
         gameOverScreen.style.display = 'flex';
+        
         // Disable all buttons to prevent further actions
         regularAttackBtn.disabled = true;
         strongAttackBtn.disabled = true;
         healBtn.disabled = true;
-        addLogMessage(message, 'game-over');
+        addLogMessage(message, `game-over ${outcome}`);
     }
 
     // Function to reset the game to its initial state (before start screen)
@@ -461,6 +517,7 @@
         startScreen.style.display = 'flex';
         gameOverScreen.style.display = 'none';
         logContainer.innerHTML = '';
+        displayHighscores();
     }
 
     // Function to start the game after selecting difficulty
@@ -483,6 +540,7 @@
         
         startScreen.style.display = 'none';
         gameOverScreen.style.display = 'none';
+        highscoreContainer.style.display = 'none';
         logContainer.innerHTML = ''; // Clear the log
         updateHealthBars();
         updateButtonState();
@@ -508,6 +566,33 @@
         }
     }
 
+    // Function to save a new high score to localStorage
+    function saveHighscore(username, rounds) {
+        let highscores = JSON.parse(localStorage.getItem('monsterSlayerHighscores')) || [];
+        highscores.push({ username, rounds });
+        highscores.sort((a, b) => a.rounds - b.rounds); // Sort by rounds ascending
+        localStorage.setItem('monsterSlayerHighscores', JSON.stringify(highscores));
+    }
+    
+    // Function to display the high scores from localStorage
+    function displayHighscores() {
+        const highscores = JSON.parse(localStorage.getItem('monsterSlayerHighscores')) || [];
+        highscoreList.innerHTML = '';
+        if (highscores.length > 0) {
+            highscoreContainer.style.display = 'block';
+            highscores.forEach((score, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. ${score.username}: ${score.rounds} rounds`;
+                highscoreList.appendChild(li);
+            });
+        } else {
+            highscoreContainer.style.display = 'block';
+            const li = document.createElement('li');
+            li.textContent = 'No high scores yet!';
+            highscoreList.appendChild(li);
+        }
+    }
+    
     // --- Game Logic Functions ---
 
     // Function for the player's turn
