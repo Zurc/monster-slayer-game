@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monster Slayer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Monofett&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #1a1a2e;
-            color: #e0e0e0;
+            font-family: 'Press Start 2P', cursive;
+            background-color: #0d0f1b;
+            color: #00f260;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -17,26 +17,28 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+            text-shadow: 0 0 5px #00f260, 0 0 10px #00f260;
         }
 
         .game-container {
-            background-color: #2c2a41;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background-color: #1a1a2e;
+            padding: 40px;
+            border-radius: 5px;
+            box-shadow: 0 0 20px #0575e6, inset 0 0 10px #0575e6;
+            border: 2px solid #0575e6;
             width: 100%;
-            max-width: 700px;
+            max-width: 800px;
             text-align: center;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 25px;
         }
 
         h1 {
-            color: #ffc629;
-            margin-top: 0;
+            color: #00f260;
+            margin: 0;
             font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 0 10px #00f260, 0 0 20px #00f260;
         }
         
         .participants {
@@ -52,40 +54,48 @@
             flex-direction: column;
             align-items: center;
             width: 45%;
-            min-width: 250px;
+            min-width: 280px;
+            color: #ffffff;
+            font-family: 'Monofett', cursive;
+            font-size: 1.2rem;
+            text-shadow: none;
         }
 
         .participant-name {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: bold;
             margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 0 0 5px #fff;
         }
 
         .health-bar-container {
             width: 100%;
             background-color: #4a4a68;
-            border-radius: 8px;
-            border: 2px solid #5d5a73;
+            border-radius: 5px;
+            border: 1px solid #0575e6;
+            box-shadow: 0 0 10px rgba(0, 117, 230, 0.5), inset 0 0 5px rgba(0, 117, 230, 0.5);
             overflow: hidden;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
         }
 
         .health-bar {
             height: 30px;
-            background-image: linear-gradient(to right, #4158d0, #c850c0);
+            background-image: linear-gradient(90deg, #00f260, #0575e6);
             transition: width 0.5s ease-in-out;
             text-align: center;
             line-height: 30px;
             color: #fff;
             font-weight: bold;
+            text-shadow: 0 0 5px #fff;
+            font-family: 'Press Start 2P', cursive;
         }
 
         .health-bar.monster {
-            background-image: linear-gradient(to right, #e23b3b, #f05252);
+            background-image: linear-gradient(90deg, #ff416c, #ff4b2b);
         }
-
+        
         .health-bar.low {
-            background-image: linear-gradient(to right, #ff416c, #ff4b2b);
+            background-image: linear-gradient(90deg, #ff0000, #ff8c00);
         }
 
         .actions {
@@ -100,57 +110,62 @@
             font-size: 1rem;
             font-weight: bold;
             color: #fff;
-            border: none;
-            border-radius: 10px;
+            border: 2px solid #fff;
+            border-radius: 5px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
-            background-color: #6a11cb;
-            background-image: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            box-shadow: 0 0 10px #00f260;
+            background-color: #1a1a2e;
+            transition: box-shadow 0.2s, transform 0.2s;
             flex: 1;
-            min-width: 150px;
+            min-width: 180px;
+            font-family: 'Press Start 2P', cursive;
         }
 
         .action-button:hover:not(:disabled) {
+            box-shadow: 0 0 15px #00f260, 0 0 25px #00f260, 0 0 30px #00f260;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
         
         .action-button:disabled {
-            background-image: linear-gradient(45deg, #444, #555);
+            border-color: #666;
+            color: #666;
+            box-shadow: none;
             cursor: not-allowed;
-            color: #aaa;
+            background-color: #333;
         }
 
         #heal-button {
-            background-image: linear-gradient(45deg, #2af598 0%, #009efd 100%);
+            border-color: #00f260;
         }
 
         #strong-attack-button {
-            background-image: linear-gradient(45deg, #ffc629 0%, #ff713a 100%);
+            border-color: #ffc629;
         }
 
         #log-container {
-            background-color: #1e1e3f;
+            background-color: #0d0f1b;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 5px;
             max-height: 200px;
             overflow-y: auto;
             text-align: left;
-            border: 1px solid #3c3b52;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+            border: 2px solid #0575e6;
+            box-shadow: inset 0 0 10px #0575e6;
+            font-family: 'Monofett', cursive;
+            color: #fff;
+            text-shadow: none;
         }
         
         .log-message {
             margin-bottom: 8px;
-            font-size: 0.9rem;
-            line-height: 1.4;
+            font-size: 1.1rem;
+            line-height: 1.2;
         }
 
-        .log-message.player-turn { color: #87e0b1; }
-        .log-message.monster-turn { color: #f08080; }
-        .log-message.system-message { color: #ffc629; font-weight: bold; }
-        .log-message.game-over { color: #ff416c; font-weight: bold; font-size: 1.2rem;}
+        .log-message.player-turn { color: #00f260; }
+        .log-message.monster-turn { color: #ff416c; }
+        .log-message.system-message { color: #fff; font-weight: bold; }
+        .log-message.game-over { color: #ff0000; font-weight: bold; font-size: 1.4rem;}
 
         #game-over-screen {
             display: none;
@@ -162,14 +177,15 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.85);
             z-index: 10;
         }
         
         #game-over-message {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: bold;
-            text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
             margin-bottom: 20px;
         }
         
@@ -178,18 +194,18 @@
             font-size: 1.2rem;
             font-weight: bold;
             color: #fff;
-            border: none;
-            border-radius: 10px;
+            border: 2px solid #00f260;
+            border-radius: 5px;
             cursor: pointer;
-            background-color: #2af598;
-            background-image: linear-gradient(45deg, #2af598 0%, #009efd 100%);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
+            background-color: #1a1a2e;
+            box-shadow: 0 0 10px #00f260;
+            transition: box-shadow 0.2s, transform 0.2s;
+            font-family: 'Press Start 2P', cursive;
         }
         
         #new-game-button:hover {
+            box-shadow: 0 0 15px #00f260, 0 0 25px #00f260, 0 0 30px #00f260;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
         
         @media (max-width: 600px) {
