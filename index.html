@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monster Slayer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            background-color: #2c2a41;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            color: #ffc629;
+            margin-top: 0;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        
+        .participants {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .participant {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 45%;
+            min-width: 250px;
+        }
+
+        .participant-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .health-bar-container {
+            width: 100%;
+            background-color: #4a4a68;
+            border-radius: 8px;
+            border: 2px solid #5d5a73;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .health-bar {
+            height: 30px;
+            background-image: linear-gradient(to right, #4158d0, #c850c0);
+            transition: width 0.5s ease-in-out;
+            text-align: center;
+            line-height: 30px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .health-bar.monster {
+            background-image: linear-gradient(to right, #e23b3b, #f05252);
+        }
+
+        .health-bar.low {
+            background-image: linear-gradient(to right, #ff416c, #ff4b2b);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .action-button {
+            padding: 15px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-color: #6a11cb;
+            background-image: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .action-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .action-button:disabled {
+            background-image: linear-gradient(45deg, #444, #555);
+            cursor: not-allowed;
+            color: #aaa;
+        }
+
+        #heal-button {
+            background-image: linear-gradient(45deg, #2af598 0%, #009efd 100%);
+        }
+
+        #strong-attack-button {
+            background-image: linear-gradient(45deg, #ffc629 0%, #ff713a 100%);
+        }
+
+        #log-container {
+            background-color: #1e1e3f;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+            border: 1px solid #3c3b52;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .log-message {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .log-message.player-turn { color: #87e0b1; }
+        .log-message.monster-turn { color: #f08080; }
+        .log-message.system-message { color: #ffc629; font-weight: bold; }
+        .log-message.game-over { color: #ff416c; font-weight: bold; font-size: 1.2rem;}
+
+        #game-over-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
+        
+        #game-over-message {
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+            margin-bottom: 20px;
+        }
+        
+        #new-game-button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background-color: #2af598;
+            background-image: linear-gradient(45deg, #2af598 0%, #009efd 100%);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        #new-game-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+            }
+            .participant {
+                width: 100%;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            #game-over-message {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Monster Slayer</h1>
+
+    <div class="participants">
+        <div class="participant">
+            <div class="participant-name">Player</div>
+            <div class="health-bar-container">
+                <div id="player-health-bar" class="health-bar" style="width: 100%;">100 HP</div>
+            </div>
+        </div>
+        <div class="participant">
+            <div class="participant-name">Monster</div>
+            <div class="health-bar-container">
+                <div id="monster-health-bar" class="health-bar monster" style="width: 100%;">100 HP</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button id="regular-attack-button" class="action-button">Regular Attack</button>
+        <button id="strong-attack-button" class="action-button">Strong Attack</button>
+        <button id="heal-button" class="action-button">Heal</button>
+    </div>
+
+    <div id="log-container">
+        <!-- Game messages will appear here -->
+    </div>
+
+    <div id="game-over-screen">
+        <div id="game-over-message"></div>
+        <button id="new-game-button">Start New Game</button>
+    </div>
+</div>
+
+<script>
+    // Constants for game settings
+    const MAX_HEALTH = 100;
+    const REGULAR_ATTACK_MIN = 8;
+    const REGULAR_ATTACK_MAX = 15;
+    const STRONG_ATTACK_MIN = 18;
+    const STRONG_ATTACK_MAX = 25;
+    const HEAL_MIN = 10;
+    const HEAL_MAX = 20;
+    const MONSTER_ATTACK_MIN = 10;
+    const MONSTER_ATTACK_MAX = 17;
+    const STRONG_ATTACK_COOLDOWN = 3;
+    const HEAL_COOLDOWN = 5;
+
+    // Game state variables
+    let playerHealth = MAX_HEALTH;
+    let monsterHealth = MAX_HEALTH;
+    let turnCount = 0;
+    let strongAttackTurns = 0;
+    let healTurns = 0;
+
+    // DOM elements
+    const playerHealthBar = document.getElementById('player-health-bar');
+    const monsterHealthBar = document.getElementById('monster-health-bar');
+    const regularAttackBtn = document.getElementById('regular-attack-button');
+    const strongAttackBtn = document.getElementById('strong-attack-button');
+    const healBtn = document.getElementById('heal-button');
+    const logContainer = document.getElementById('log-container');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const gameOverMessage = document.getElementById('game-over-message');
+    const newGameBtn = document.getElementById('new-game-button');
+
+    // --- Helper Functions ---
+    
+    // Function to get a random integer within a range
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Function to add a message to the game log
+    function addLogMessage(message, type) {
+        const p = document.createElement('p');
+        p.className = `log-message ${type}`;
+        p.textContent = message;
+        logContainer.appendChild(p);
+        logContainer.scrollTop = logContainer.scrollHeight; // Auto-scroll to the bottom
+    }
+
+    // Function to update health bars and display new health
+    function updateHealthBars() {
+        // Player Health Bar
+        const playerHealthPercentage = Math.max(0, playerHealth); // Ensure health doesn't go below 0
+        playerHealthBar.style.width = `${playerHealthPercentage}%`;
+        playerHealthBar.textContent = `${playerHealth} HP`;
+        if (playerHealth <= 25) {
+            playerHealthBar.classList.add('low');
+        } else {
+            playerHealthBar.classList.remove('low');
+        }
+
+        // Monster Health Bar
+        const monsterHealthPercentage = Math.max(0, monsterHealth);
+        monsterHealthBar.style.width = `${monsterHealthPercentage}%`;
+        monsterHealthBar.textContent = `${monsterHealth} HP`;
+        if (monsterHealth <= 25) {
+            monsterHealthBar.classList.add('low');
+        } else {
+            monsterHealthBar.classList.remove('low');
+        }
+    }
+
+    // Function to check for game over condition
+    function checkForGameOver() {
+        if (playerHealth <= 0) {
+            endGame("You were defeated! The monster wins!");
+            return true;
+        }
+        if (monsterHealth <= 0) {
+            endGame("You have slain the monster! You win!");
+            return true;
+        }
+        return false;
+    }
+
+    // Function to handle the end of the game
+    function endGame(message) {
+        gameOverMessage.textContent = message;
+        gameOverScreen.style.display = 'flex';
+        // Disable all buttons to prevent further actions
+        regularAttackBtn.disabled = true;
+        strongAttackBtn.disabled = true;
+        healBtn.disabled = true;
+        addLogMessage(message, 'game-over');
+    }
+
+    // Function to reset the game to its initial state
+    function resetGame() {
+        playerHealth = MAX_HEALTH;
+        monsterHealth = MAX_HEALTH;
+        turnCount = 0;
+        strongAttackTurns = 0;
+        healTurns = 0;
+        
+        gameOverScreen.style.display = 'none';
+        logContainer.innerHTML = ''; // Clear the log
+        updateHealthBars();
+        enableButtons();
+        addLogMessage("A new game has started!", 'system-message');
+    }
+    
+    // Function to enable all player action buttons
+    function enableButtons() {
+        regularAttackBtn.disabled = false;
+        strongAttackBtn.disabled = false;
+        healBtn.disabled = false;
+        
+        // Update cooldowns visually
+        strongAttackBtn.textContent = `Strong Attack (${STRONG_ATTACK_COOLDOWN - strongAttackTurns})`;
+        healBtn.textContent = `Heal (${HEAL_COOLDOWN - healTurns})`;
+    }
+
+    // --- Game Logic Functions ---
+
+    // Function for the player's turn
+    function playerTurn(action) {
+        if (checkForGameOver()) return;
+        
+        let damage = 0;
+        let heal = 0;
+        
+        turnCount++;
+        strongAttackTurns = (strongAttackTurns + 1) % STRONG_ATTACK_COOLDOWN;
+        healTurns = (healTurns + 1) % HEAL_COOLDOWN;
+
+        if (action === 'regular') {
+            damage = getRandomInt(REGULAR_ATTACK_MIN, REGULAR_ATTACK_MAX);
+            monsterHealth -= damage;
+            addLogMessage(`You dealt ${damage} damage with a regular attack!`, 'player-turn');
+        } else if (action === 'strong') {
+            damage = getRandomInt(STRONG_ATTACK_MIN, STRONG_ATTACK_MAX);
+            monsterHealth -= damage;
+            addLogMessage(`You dealt a massive ${damage} damage with a strong attack!`, 'player-turn');
+        } else if (action === 'heal') {
+            heal = getRandomInt(HEAL_MIN, HEAL_MAX);
+            playerHealth = Math.min(MAX_HEALTH, playerHealth + heal);
+            addLogMessage(`You healed yourself for ${heal} health!`, 'player-turn');
+        }
+
+        updateHealthBars();
+        if (checkForGameOver()) return;
+        
+        // After player's turn, monster attacks
+        setTimeout(monsterTurn, 1000);
+    }
+    
+    // Function for the monster's turn
+    function monsterTurn() {
+        if (checkForGameOver()) return;
+        
+        const damage = getRandomInt(MONSTER_ATTACK_MIN, MONSTER_ATTACK_MAX);
+        playerHealth -= damage;
+        
+        addLogMessage(`The monster attacks, dealing ${damage} damage!`, 'monster-turn');
+        
+        updateHealthBars();
+        checkForGameOver();
+        updateButtonState(); // Check button state after monster's turn
+    }
+
+    // Function to update the disabled state of buttons based on turn count
+    function updateButtonState() {
+        // Strong Attack is available every 3 turns
+        if (strongAttackTurns === 0) {
+            strongAttackBtn.disabled = false;
+            strongAttackBtn.textContent = "Strong Attack";
+        } else {
+            strongAttackBtn.disabled = true;
+            strongAttackBtn.textContent = `Strong Attack (${STRONG_ATTACK_COOLDOWN - strongAttackTurns})`;
+        }
+
+        // Heal is available every 5 turns
+        if (healTurns === 0) {
+            healBtn.disabled = false;
+            healBtn.textContent = "Heal";
+        } else {
+            healBtn.disabled = true;
+            healBtn.textContent = `Heal (${HEAL_COOLDOWN - healTurns})`;
+        }
+    }
+
+    // --- Event Listeners ---
+    
+    regularAttackBtn.addEventListener('click', () => playerTurn('regular'));
+    strongAttackBtn.addEventListener('click', () => playerTurn('strong'));
+    healBtn.addEventListener('click', () => playerTurn('heal'));
+    newGameBtn.addEventListener('click', resetGame);
+    
+    // Initialize the game when the page loads
+    window.onload = function() {
+        resetGame();
+    };
+
+</script>
+
+</body>
+</html>
