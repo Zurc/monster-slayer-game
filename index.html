@@ -478,6 +478,9 @@
         strongAttackCooldown = 0; // Starts available
         healCooldown = 0; // Starts available
         
+        // Ensure all buttons are enabled at the start of the game
+        regularAttackBtn.disabled = false;
+        
         startScreen.style.display = 'none';
         gameOverScreen.style.display = 'none';
         logContainer.innerHTML = ''; // Clear the log
